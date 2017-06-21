@@ -1,0 +1,22 @@
+{
+  "name": "novlet",
+  "version": "0.0.1",
+  "description": "Web novel downloader and reader",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron ."
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/hinamiyagk/novlet.git"
+  },
+  "author": "Hinata",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/hinamiyagk/novlet/issues"
+  },
+  "homepage": "https://github.com/hinamiyagk/novlet#readme",
+  "devDependencies": {
+    "electron": "1.6.11"
+  }
+}
