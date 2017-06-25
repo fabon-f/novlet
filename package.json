@@ -4,7 +4,9 @@
   "description": "Web novel downloader and reader",
   "main": "main.js",
   "scripts": {
-    "start": "electron ."
+    "start": "electron .",
+    "build": "tsc --pretty",
+    "watch": "tsc --pretty -w"
   },
   "repository": {
     "type": "git",
@@ -17,6 +19,7 @@
   },
   "homepage": "https://github.com/hinamiyagk/novlet#readme",
   "devDependencies": {
-    "electron": "1.6.11"
+    "electron": "1.6.11",
+    "typescript": "^2.3.4"
   }
 }
