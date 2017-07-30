@@ -6,7 +6,8 @@
   "scripts": {
     "start": "electron .",
     "build": "tsc --pretty",
-    "watch": "tsc --pretty -w"
+    "watch": "tsc --pretty -w",
+    "test": "ava"
   },
   "repository": {
     "type": "git",
@@ -19,7 +20,11 @@
   },
   "homepage": "https://github.com/hinamiyagk/novlet#readme",
   "devDependencies": {
+    "ava": "^0.21.0",
     "electron": "1.6.11",
     "typescript": "^2.3.4"
+  },
+  "dependencies": {
+    "axios": "^0.16.2"
   }
 }
