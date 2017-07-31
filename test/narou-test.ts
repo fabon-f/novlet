@@ -1,6 +1,34 @@
 import { fetchNovelInfo } from "../lib/narou";
+import axios, { AxiosRequestConfig } from "axios";
+import { readFileSync } from "fs";
+import { join, extname } from "path";
 
 import test from "ava";
+
+const MockAdapter = require("axios-mock-adapter");
+
+function fixtureFileResponse(file: string) {
+  if (extname(file) === ".json") {
+    return [200, JSON.parse(readFileSync(join(__dirname, "fixture", file), "utf8"))];
+  } else {
+    return [200, readFileSync(join(__dirname, file), "utf8")];
+  }
+}
+
+test.before(() => {
+  if (process.env.DISABLE_HTTP_MOCK) { return; }
+
+  const mock = new MockAdapter(axios);
+  mock.onGet("http://api.syosetu.com/novelapi/api/").reply((config: AxiosRequestConfig) => {
+    if (config.params.ncode === "n2267be") {
+      return fixtureFileResponse("rezero.json");
+    } else if (config.params.ncode === "n0691cu") {
+      return fixtureFileResponse("ss.json");
+    } else {
+      return [500, null]
+    }
+  });
+});
 
 test("fetchNovelInfo with serial novel", async (t) => {
   const info = await fetchNovelInfo("n2267be");
