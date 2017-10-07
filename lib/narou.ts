@@ -1,4 +1,6 @@
 import axios from "axios";
+import * as cheerio from "cheerio";
+import { parse, resolve } from "url";
 
 interface NarouAPIResponse {
   title: string;
@@ -63,6 +65,32 @@ interface ShortNovelInfo extends NovelInfo {
   isSerial: false;
 }
 
+interface Chapter {
+  title: string;
+  episodes: string[];
+}
+
+interface Episode {
+  title: string;
+  id: string;
+  /**
+   * ISO 8601 compliant time(with timezone)
+   */
+  publishedAt: string;
+}
+
+interface UnmodifiedEpisode extends Episode {
+  modified: false;
+}
+
+interface ModifiedEpisode extends Episode {
+  modified: true;
+  /**
+   * ISO 8601 compliant time(with timezone)
+   */
+  modifiedAt: string;
+}
+
 function novelInfo(res: NarouAPIResponse): SerialNovelInfo | ShortNovelInfo {
   const { title, ncode, userid, writer, story, keyword, genre } = res;
   const generalInfo: NovelInfo = {
@@ -100,4 +128,93 @@ export async function fetchNovelInfo(ncode: string) {
   }
   const data: NarouAPIResponse = response.data[1];
   return novelInfo(data);
+}
+
+function extractEpisode(element: Cheerio): ModifiedEpisode | UnmodifiedEpisode {
+  const episodeLink = element.find("a");
+  const episodePath = parse(episodeLink.attr("href")).pathname;
+
+  if (episodePath === undefined) { throw new Error("Invalid link"); }
+
+  const id = episodePath.split("/")[2];
+  const title = episodeLink.text().trim();
+  const episodeDateElement = element.find(".long_update");
+  const publishedAt = episodeDateElement.contents().first().text().trim().replace(/^(\d{4})\/(\d{2})\/(\d{2}) (\d{2}:\d{2})$/, "$1-$2-$3T$4:00+09:00");
+
+  const episode: Episode = {
+    id, title, publishedAt,
+  };
+
+  if (episodeDateElement.find("span[title]").length !== 0) {
+    const modifiedAt = episodeDateElement.find("span[title]").attr("title").trim().replace(/^(\d{4})\/(\d{2})\/(\d{2}) (\d{2}:\d{2}).+/, "$1-$2-$3T$4:00+09:00");
+    return {
+      ...episode,
+      modified: true,
+      modifiedAt,
+    };
+  } else {
+    return {
+      ...episode,
+      modified: false,
+    };
+  }
+}
+
+interface TOC {
+  chapters: Chapter[] | null;
+  episodes: Array<ModifiedEpisode | UnmodifiedEpisode>;
+}
+
+function extractTOC($: CheerioStatic): TOC {
+  const chapters = [];
+  const episodes: Array<ModifiedEpisode | UnmodifiedEpisode> = [];
+  const elements = $(".index_box .chapter_title, .index_box .novel_sublist2").toArray();
+  const hasChapters = $(elements[0]).hasClass("chapter_title");
+  for (const e of elements) {
+    const element = $(e);
+    if (element.hasClass("chapter_title")) {
+      const chapter: Chapter = {
+        title: element.text().trim(),
+        episodes: [],
+      };
+      chapters.push(chapter);
+    } else {
+      const episode = extractEpisode(element);
+      episodes.push(episode);
+
+      if (hasChapters) {
+        chapters[chapters.length - 1].episodes.push(episode.id);
+      }
+    }
+  }
+
+  return {
+    chapters: hasChapters ? chapters : null,
+    episodes,
+  };
+}
+
+function extractDownloadID($: CheerioStatic) {
+  const downloadURL = $("#novel_footer a[href*=txtdownload]").attr("href");
+  const downloadPath = parse(downloadURL).pathname;
+  if (downloadPath === undefined) { throw new Error("Invalid download link"); }
+  return downloadPath.split("/")[4];
+}
+
+export async function scrapeNovelPage(info: SerialNovelInfo): Promise<{ toc: TOC, downloadID: string }>;
+export async function scrapeNovelPage(info: ShortNovelInfo): Promise<{ downloadID: string }>;
+export async function scrapeNovelPage(info: SerialNovelInfo | ShortNovelInfo) {
+  const novelURL = `http://ncode.syosetu.com/${info.ncode.toLowerCase()}/`;
+  const response = await axios.get(novelURL);
+  const $ = cheerio.load(response.data);
+
+  $("a").each((_, element) => {
+    const link = $(element);
+    const href = link.attr("href");
+    link.attr("href", resolve(novelURL, href).toString());
+  });
+
+  const downloadID = extractDownloadID($);
+
+  return info.isSerial ? { toc: extractTOC($), downloadID } : { downloadID };
 }
