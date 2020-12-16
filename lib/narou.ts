@@ -1,6 +1,5 @@
 import axios from "axios";
 import * as cheerio from "cheerio";
-import { parse, resolve } from "url";
 
 interface NarouAPIResponse {
   title: string;
@@ -140,11 +139,9 @@ function extractEpisode(element: cheerio.Cheerio): ModifiedEpisode | UnmodifiedE
   const episodeLink = element.find("a");
   const episodeURL = episodeLink.attr("href");
   if (episodeURL === undefined) { throw new Error("Invalid link"); }
-  const episodePath = parse(episodeURL).pathname;
 
-  if (episodePath === null) { throw new Error("Invalid link"); }
-
-  const id = episodePath.split("/")[2];
+  const id = new URL(episodeURL).pathname.split("/")[2];
+  if (id === undefined) { throw new Error("Invalid link"); }
   const title = episodeLink.text().trim();
   const episodeDateElement = element.find(".long_update");
   const publishedAt = episodeDateElement.contents().first().text().trim().replace(/^(\d{4})\/(\d{2})\/(\d{2}) (\d{2}:\d{2})$/, "$1-$2-$3T$4:00+09:00");
@@ -215,7 +212,7 @@ export async function scrapeNovelPage(info: SerialNovelInfo | ShortNovelInfo) {
     const link = $(element);
     const href = link.attr("href");
     if (href === undefined) { return; }
-    link.attr("href", resolve(novelURL, href).toString());
+    link.attr("href", new URL(href, novelURL).toString());
   });
 
   return info.isSerial ? { toc: extractTOC($) } : {};
