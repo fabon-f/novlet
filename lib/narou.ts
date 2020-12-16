@@ -41,7 +41,7 @@ function formatISODate(str: string) {
   return str.replace(/^(\d{4}-\d{2}-\d{2}) (\d{2}:\d{2}:\d{2})$/, "$1T$2+09:00");
 }
 
-class NovelInfo {
+interface NovelInfo {
   title: string;
   ncode: string;
   userID: number;
@@ -130,11 +130,13 @@ export async function fetchNovelInfo(ncode: string) {
   return novelInfo(data);
 }
 
-function extractEpisode(element: Cheerio): ModifiedEpisode | UnmodifiedEpisode {
+function extractEpisode(element: cheerio.Cheerio): ModifiedEpisode | UnmodifiedEpisode {
   const episodeLink = element.find("a");
-  const episodePath = parse(episodeLink.attr("href")).pathname;
+  const episodeURL = episodeLink.attr("href");
+  if (episodeURL === undefined) { throw new Error("Invalid link"); }
+  const episodePath = parse(episodeURL).pathname;
 
-  if (episodePath === undefined) { throw new Error("Invalid link"); }
+  if (episodePath === null) { throw new Error("Invalid link"); }
 
   const id = episodePath.split("/")[2];
   const title = episodeLink.text().trim();
@@ -146,7 +148,9 @@ function extractEpisode(element: Cheerio): ModifiedEpisode | UnmodifiedEpisode {
   };
 
   if (episodeDateElement.find("span[title]").length !== 0) {
-    const modifiedAt = episodeDateElement.find("span[title]").attr("title").trim().replace(/^(\d{4})\/(\d{2})\/(\d{2}) (\d{2}:\d{2}).+/, "$1-$2-$3T$4:00+09:00");
+    const episodeDateElementTitle = episodeDateElement.find("span[title]").attr("title");
+    if (episodeDateElementTitle === undefined) { throw new Error("Invalid link"); }
+    const modifiedAt = episodeDateElementTitle.trim().replace(/^(\d{4})\/(\d{2})\/(\d{2}) (\d{2}:\d{2}).+/, "$1-$2-$3T$4:00+09:00");
     return {
       ...episode,
       modified: true,
@@ -165,7 +169,7 @@ interface TOC {
   episodes: Array<ModifiedEpisode | UnmodifiedEpisode>;
 }
 
-function extractTOC($: CheerioStatic): TOC {
+function extractTOC($: cheerio.Root): TOC {
   const chapters = [];
   const episodes: Array<ModifiedEpisode | UnmodifiedEpisode> = [];
   const elements = $(".index_box .chapter_title, .index_box .novel_sublist2").toArray();
@@ -194,10 +198,11 @@ function extractTOC($: CheerioStatic): TOC {
   };
 }
 
-function extractDownloadID($: CheerioStatic) {
+function extractDownloadID($: cheerio.Root) {
   const downloadURL = $("#novel_footer a[href*=txtdownload]").attr("href");
+  if (downloadURL === undefined) { throw new Error("Invalid download link"); }
   const downloadPath = parse(downloadURL).pathname;
-  if (downloadPath === undefined) { throw new Error("Invalid download link"); }
+  if (downloadPath === null) { throw new Error("Invalid download link"); }
   return downloadPath.split("/")[4];
 }
 
@@ -211,6 +216,7 @@ export async function scrapeNovelPage(info: SerialNovelInfo | ShortNovelInfo) {
   $("a").each((_, element) => {
     const link = $(element);
     const href = link.attr("href");
+    if (href === undefined) { return; }
     link.attr("href", resolve(novelURL, href).toString());
   });
 
