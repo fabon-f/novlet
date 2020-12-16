@@ -11,14 +11,14 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/hinamiyagk/novlet.git"
+    "url": "git+https://github.com/fabon-f/novlet.git"
   },
-  "author": "Hinata",
+  "author": "fabon",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/hinamiyagk/novlet/issues"
+    "url": "https://github.com/fabon-f/novlet/issues"
   },
-  "homepage": "https://github.com/hinamiyagk/novlet#readme",
+  "homepage": "https://github.com/fabon-f/novlet#readme",
   "devDependencies": {
     "@types/cheerio": "^0.22.2",
     "@types/mz": "^0.0.32",
