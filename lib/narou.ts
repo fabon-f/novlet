@@ -27,7 +27,13 @@ interface NarouAPIResponse {
   istenni: 0 | 1;
   pc_or_k: 1 | 2 | 3;
   global_point: number;
+  daily_point: number;
+  weekly_point: number;
+  monthly_point: number;
+  quarter_point: number;
+  yearly_point: number;
   fav_novel_cnt: number;
+  impression_cnt: number;
   review_cnt: number;
   all_point: number;
   all_hyoka_cnt: number;
@@ -198,19 +204,11 @@ function extractTOC($: cheerio.Root): TOC {
   };
 }
 
-function extractDownloadID($: cheerio.Root) {
-  const downloadURL = $("#novel_footer a[href*=txtdownload]").attr("href");
-  if (downloadURL === undefined) { throw new Error("Invalid download link"); }
-  const downloadPath = parse(downloadURL).pathname;
-  if (downloadPath === null) { throw new Error("Invalid download link"); }
-  return downloadPath.split("/")[4];
-}
-
-export async function scrapeNovelPage(info: SerialNovelInfo): Promise<{ toc: TOC, downloadID: string }>;
-export async function scrapeNovelPage(info: ShortNovelInfo): Promise<{ downloadID: string }>;
+export async function scrapeNovelPage(info: SerialNovelInfo): Promise<{ toc: TOC }>;
+export async function scrapeNovelPage(info: ShortNovelInfo): Promise<{}>;
 export async function scrapeNovelPage(info: SerialNovelInfo | ShortNovelInfo) {
   const novelURL = `http://ncode.syosetu.com/${info.ncode.toLowerCase()}/`;
-  const response = await axios.get(novelURL);
+  const response = await axios.get(novelURL, { headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.3764.0 Safari/537.36" } });
   const $ = cheerio.load(response.data);
 
   $("a").each((_, element) => {
@@ -220,7 +218,5 @@ export async function scrapeNovelPage(info: SerialNovelInfo | ShortNovelInfo) {
     link.attr("href", resolve(novelURL, href).toString());
   });
 
-  const downloadID = extractDownloadID($);
-
-  return info.isSerial ? { toc: extractTOC($), downloadID } : { downloadID };
+  return info.isSerial ? { toc: extractTOC($) } : {};
 }
