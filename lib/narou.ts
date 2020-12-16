@@ -126,7 +126,7 @@ function novelInfo(res: NarouAPIResponse): SerialNovelInfo | ShortNovelInfo {
 }
 
 export async function fetchNovelInfo(ncode: string) {
-  const response = await axios.get("http://api.syosetu.com/novelapi/api/", {
+  const response = await axios.get("https://api.syosetu.com/novelapi/api/", {
     params: { out: "json", ncode },
   });
   if (response.data[0].allcount === 0) {
@@ -207,7 +207,7 @@ function extractTOC($: cheerio.Root): TOC {
 export async function scrapeNovelPage(info: SerialNovelInfo): Promise<{ toc: TOC }>;
 export async function scrapeNovelPage(info: ShortNovelInfo): Promise<{}>;
 export async function scrapeNovelPage(info: SerialNovelInfo | ShortNovelInfo) {
-  const novelURL = `http://ncode.syosetu.com/${info.ncode.toLowerCase()}/`;
+  const novelURL = `https://ncode.syosetu.com/${info.ncode.toLowerCase()}/`;
   const response = await axios.get(novelURL, { headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.3764.0 Safari/537.36" } });
   const $ = cheerio.load(response.data);
 

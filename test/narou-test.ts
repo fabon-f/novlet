@@ -19,7 +19,7 @@ test.before(() => {
   if (process.env.DISABLE_HTTP_MOCK) { return; }
 
   const mock = new MockAdapter(axios);
-  mock.onGet("http://api.syosetu.com/novelapi/api/").reply((config: AxiosRequestConfig) => {
+  mock.onGet("https://api.syosetu.com/novelapi/api/").reply((config: AxiosRequestConfig) => {
     if (config.params.ncode === "n2267be") {
       return fixtureFileResponse("rezero.json");
     } else if (config.params.ncode === "n0691cu") {
@@ -30,7 +30,7 @@ test.before(() => {
       return [500, null]
     }
   });
-  const novelURLRegex = /http:\/\/ncode.syosetu.com\/(.+)\//;
+  const novelURLRegex = /https:\/\/ncode.syosetu.com\/(.+)\//;
   mock.onGet(novelURLRegex).reply((config: AxiosRequestConfig) => {
     const matchResult = novelURLRegex.exec(config.url!);
     const ncode = matchResult![1];
