@@ -41,6 +41,11 @@
     "src/**/*"
   ],
   "exclude": [
+    "**/*.test.ts",
+    "**/*.spec.ts",
+    "**/*.test.tsx",
+    "**/*.spec.tsx",
+    "__test__",
     "node_modules"
   ]
 }

@@ -1,21 +1,19 @@
-import { fetchNovelInfo, scrapeNovelPage } from "../lib/narou";
+import { fetchNovelInfo, scrapeNovelPage } from "./narou";
 import axios, { AxiosRequestConfig } from "axios";
 import { readFileSync } from "fs";
 import { join, extname } from "path";
-
-import test from "ava";
 
 const MockAdapter = require("axios-mock-adapter");
 
 function fixtureFileResponse(file: string) {
   if (extname(file) === ".json") {
-    return [200, JSON.parse(readFileSync(join(__dirname, "fixture", file), "utf8"))];
+    return [200, JSON.parse(readFileSync(join(__dirname, "__fixture__", file), "utf8"))];
   } else {
-    return [200, readFileSync(join(__dirname, "fixture", file), "utf8")];
+    return [200, readFileSync(join(__dirname, "__fixture__", file), "utf8")];
   }
 }
 
-test.before(() => {
+beforeAll(() => {
   if (process.env.DISABLE_HTTP_MOCK) { return; }
 
   const mock = new MockAdapter(axios);
@@ -47,57 +45,56 @@ test.before(() => {
   });
 });
 
-test("fetchNovelInfo with serial novel", async (t) => {
+test("fetchNovelInfo with serial novel", async () => {
   const info = await fetchNovelInfo("n2267be");
   if (!info.isSerial) {
     throw new Error();
   }
   const { title, ncode, userID, writer, story, keywords, isSerial, isContinued, lastUpdatedAt } = info;
-  t.is(title, "Ｒｅ：ゼロから始める異世界生活");
-  t.is(ncode, "N2267BE");
-  t.is(userID, 235132);
-  t.is(writer, "鼠色猫/長月達平");
-  t.true(story.startsWith("突如"));
-  t.true(keywords.includes("残酷な描写あり"));
-  t.true(isSerial);
-  t.true(isContinued);
-  t.regex(lastUpdatedAt, /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\+09:00$/);
+  expect(title).toBe("Ｒｅ：ゼロから始める異世界生活");
+  expect(ncode).toBe("N2267BE");
+  expect(userID).toBe(235132);
+  expect(writer).toBe("鼠色猫/長月達平")
+  expect(story.startsWith("突如")).toBe(true);
+  expect(keywords.includes("残酷な描写あり")).toBe(true);
+  expect(isSerial).toBe(true);
+  expect(isContinued).toBe(true);
+  expect(lastUpdatedAt).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\+09:00$/);
 });
 
-test("scrapeNovelPage with serial novel", async (t) => {
+test("scrapeNovelPage with serial novel", async () => {
   const info = await fetchNovelInfo("n2267be");
   if (!info.isSerial) { throw new Error(""); }
   const { toc } = await scrapeNovelPage(info);
 
   const episode = toc.episodes[0];
-  t.is(episode.id, "1");
-  t.true(episode.modified);
-  t.is(episode.publishedAt, "2012-04-20T21:58:00+09:00");
-  t.is(episode.title, "プロローグ　『始まりの余熱』");
+  expect(episode.id).toBe("1");
+  expect(episode.modified).toBe(true);
+  expect(episode.publishedAt).toBe("2012-04-20T21:58:00+09:00");
+  expect(episode.title).toBe("プロローグ　『始まりの余熱』");
 
   if (!episode.modified) { throw new Error(""); }
 
-  t.is(episode.modifiedAt, "2012-09-01T20:09:00+09:00");
+  expect(episode.modifiedAt).toBe("2012-09-01T20:09:00+09:00");
 
   if (!toc.chapters) { throw new Error(""); }
-  t.is(toc.chapters[0].title, "第一章　怒涛の一日目");
-  t.deepEqual(toc.chapters[2].episodes, ["75", "76"]);
+  expect(toc.chapters[0].title).toBe("第一章　怒涛の一日目");
+  expect(toc.chapters[2].episodes).toEqual(["75", "76"]);
 });
 
-test("scrapeNovelPage with serial novel which is not chaptered", async (t) => {
+test("scrapeNovelPage with serial novel which is not chaptered", async () => {
   const info = await fetchNovelInfo("n0312a");
   if (!info.isSerial) { throw new Error(""); }
   const { toc } = await scrapeNovelPage(info);
-  t.is(toc.chapters, null);
+  expect(toc.chapters).toBeNull();
 });
 
-test("fetchNovelInfo with short novel", async (t) => {
+test("fetchNovelInfo with short novel", async () => {
   const info = await fetchNovelInfo("n0691cu");
-  t.false(info.isSerial);
+  expect(info.isSerial).toBe(false);
 });
 
-test("scrapeNovelPage with short novel", async (t) => {
+test("scrapeNovelPage with short novel", async () => {
   const info = await fetchNovelInfo("n0691cu");
   if (info.isSerial) { throw new Error(""); }
-  t.true(true)
 });

@@ -35,7 +35,13 @@ export default class TextStorage {
     }
   }
   async get(hashValue: string) {
-    const fileContent = await fs.readFile(join(this.path, hashValue));
+    let fileContent;
+    try {
+      fileContent = await fs.readFile(join(this.path, hashValue));
+    } catch (error) {
+      if (error.code === "ENOENT") { throw new Error(`No data with the hash '${hashValue}'`); }
+      throw error;
+    }
     const textBuffer = await gunzip(fileContent);
     const text = textBuffer.toString("utf8");
     if (sha256(text) !== hashValue) {
