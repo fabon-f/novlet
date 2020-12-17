@@ -5,7 +5,7 @@
     "module": "commonjs",
     // "sourceMap": true,                     /* Generates corresponding '.map' file. */
     // "outFile": "./",                       /* Concatenate and emit output to single file. */
-    // "outDir": "./",                        /* Redirect output structure to the directory. */
+    "outDir": "./dest",                           /* Redirect output structure to the directory. */
     // "rootDir": "./",                       /* Specify the root directory of input files. Use to control the output directory structure with --outDir. */
     "removeComments": true,
     // "importHelpers": true,                 /* Import emit helpers from 'tslib'. */
@@ -38,7 +38,7 @@
     // "emitDecoratorMetadata": true,         /* Enables experimental support for emitting type metadata for decorators. */
   },
   "include": [
-    "**/*"
+    "src/**/*"
   ],
   "exclude": [
     "node_modules"
