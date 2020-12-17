@@ -1,8 +1,10 @@
 import test from "ava";
 
-import { mkdtemp, writeFile } from "mz/fs";
+import { promises as fs } from "fs";
 import { tmpdir } from "os";
 import { join } from "path";
+
+const { mkdtemp, writeFile } = fs;
 
 import TextStorage from "../lib/text-storage";
 
